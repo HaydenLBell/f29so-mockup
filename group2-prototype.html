@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Public Transport Prototype - Group 2</title>
+  <style>
+:root {
+  --ink: #14182b;
+  --muted: #5d6478;
+  --line: #e2e5ec;
+  --bg: #f3f4f8;
+  --card: #ffffff;
+  --brand: #1d2a6b;
+  --train: #2b50d6;
+  --bus: #e0601a;
+  --taxi: #a86b00;
+  --sea: #dce8f4;
+  --land: #fbfaf6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+h1, h2, h3 {
+  margin: 0 0 8px;
+  line-height: 1.2;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.screen,
+.view {
+  display: none;
+}
+
+.screen.active,
+.view.active {
+  display: block;
+}
+
+.brand {
+  font-weight: 800;
+  font-size: 22px;
+  color: var(--brand);
+  letter-spacing: -0.5px;
+}
+
+.brand.large {
+  font-size: 36px;
+}
+
+.button {
+  border: 0;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-weight: 600;
+}
+
+.button.primary {
+  background: var(--brand);
+  color: #fff;
+}
+
+.button.secondary {
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+
+.button.full {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.link {
+  background: none;
+  border: 0;
+  padding: 8px 0;
+  color: var(--brand);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.fake-input {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--bg);
+  color: var(--muted);
+}
+
+#login-screen.active {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: linear-gradient(160deg, var(--brand), #3a4fb0);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--card);
+  border-radius: 18px;
+  padding: 32px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+
+.login-card label {
+  display: block;
+  margin: 16px 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.note {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.top-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px max(4vw, 16px);
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.nav-link {
+  background: none;
+  border: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.nav-link.active {
+  background: var(--bg);
+  color: var(--brand);
+}
+
+#plan-view.active {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px 16px;
+}
+
+.map-card,
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+#map {
+  width: 100%;
+  max-height: 72vh;
+  display: block;
+  background: var(--sea);
+  border-radius: 12px;
+}
+
+#map.train {
+  --mode-colour: var(--train);
+}
+
+#map.bus {
+  --mode-colour: var(--bus);
+}
+
+#map.taxi {
+  --mode-colour: var(--taxi);
+}
+
+.modal-card h3 {
+  margin-top: 16px;
+}
+
+.land {
+  fill: var(--land);
+  stroke: #b9c3cf;
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+.route {
+  stroke: #b7bfcc;
+  stroke-width: 2;
+  stroke-dasharray: 4 4;
+}
+
+.route.active {
+  stroke-dasharray: none;
+  stroke-width: 4;
+}
+
+.route.active.train {
+  stroke: var(--train);
+}
+
+.route.active.bus {
+  stroke: var(--bus);
+}
+
+.route.active.taxi {
+  stroke: var(--taxi);
+}
+
+.route.chosen {
+  stroke-width: 6;
+}
+
+.stop {
+  cursor: pointer;
+}
+
+.stop circle {
+  fill: #fff;
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+
+.stop:hover circle {
+  stroke-width: 4;
+}
+
+.stop.reachable circle {
+  stroke: var(--mode-colour);
+  stroke-width: 4;
+}
+
+.stop.origin circle,
+.stop.destination circle {
+  fill: var(--mode-colour);
+  stroke: #fff;
+}
+
+.stop text {
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--ink);
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 3px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.dot.train {
+  background: var(--train);
+}
+
+.dot.bus {
+  background: var(--bus);
+}
+
+.dot.taxi {
+  background: var(--taxi);
+}
+
+.step {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  margin: 16px 0 4px;
+}
+
+.segmented {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.segmented button {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px;
+  background: none;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.segmented button.selected {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.chip {
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 14px;
+}
+
+.chip.selected {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.list {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+  max-height: 52vh;
+  overflow-y: auto;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.row:hover {
+  border-color: var(--brand);
+}
+
+.row small {
+  display: block;
+  color: var(--muted);
+}
+
+.time {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.price {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.badge.train {
+  background: var(--train);
+}
+
+.badge.bus {
+  background: var(--bus);
+}
+
+.badge.taxi {
+  background: var(--taxi);
+}
+
+#tickets-view.active {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.ticket-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.ticket {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.ticket-head {
+  padding: 14px 16px;
+  color: #fff;
+}
+
+.ticket-head.train {
+  background: var(--train);
+}
+
+.ticket-head.bus {
+  background: var(--bus);
+}
+
+.ticket-head.taxi {
+  background: var(--taxi);
+}
+
+.ticket-head h3 {
+  margin: 4px 0 0;
+}
+
+.ticket-body {
+  padding: 14px 16px;
+}
+
+.details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.details small {
+  display: block;
+  color: var(--muted);
+}
+
+.legs {
+  margin: 12px 0 0;
+  padding-left: 20px;
+  font-size: 14px;
+}
+
+.legs li {
+  padding: 2px 0;
+}
+
+.qr {
+  display: block;
+  width: 180px;
+  margin: 16px auto 4px;
+  shape-rendering: crispEdges;
+}
+
+.ticket-ref {
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.summary {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 12px 0;
+}
+
+.summary div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 24, 43, 0.55);
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.modal.open {
+  display: grid;
+  place-items: center;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--card);
+  border-radius: 18px;
+  padding: 24px;
+}
+
+.success {
+  color: #1c7c4a;
+}
+
+@media (max-width: 800px) {
+  #plan-view.active {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #map {
+    max-height: 60vh;
+  }
+}
+</style>
+</head>
+<body>
+  <section id="login-screen" class="screen active">
+    <div class="login-card">
+      <div class="brand large">F29SO - Group 2</div>
+      <p class="muted">Trains, buses and taxis across the UK in one place.</p>
+      <label>Email</label>
+      <div class="fake-input">bell.hayden@example.com</div>
+      <label>Password</label>
+      <div class="fake-input">••••••••••</div>
+      <button id="login-button" class="button primary full">Sign in</button>
+      <p class="note">*Prototype: no details needed, just press sign in.</p>
+    </div>
+  </section>
+
+  <section id="app-screen" class="screen">
+    <header class="top-bar">
+      <div class="brand">F29SO - Group 2</div>
+      <nav>
+        <button class="nav-link active" data-view="plan">Plan a journey</button>
+        <button class="nav-link" data-view="tickets">My tickets</button>
+        <button id="logout-button" class="nav-link">Sign out</button>
+      </nav>
+    </header>
+
+    <main id="plan-view" class="view active">
+      <div class="map-card">
+        <svg id="map" viewBox="0 0 400 560">
+          <path class="land" d="M188.3 21.8 L198.7 23.6 L198.0 35.6 L178.5 54.8 L174.4 70.4 L159.4 90.8 L191.4 78.8 L236.0 80.6 L243.7 92.0 L233.2 113.0 L219.6 139.4 L209.9 155.0 L215.8 165.2 L196.0 175.4 L180.3 180.2 L194.2 183.2 L217.9 182.0 L231.5 188.0 L236.0 195.8 L256.2 240.8 L263.9 260.6 L284.5 272.6 L302.9 294.8 L301.9 327.2 L317.6 353.6 L312.7 371.0 L323.1 365.0 L351.0 366.2 L366.0 386.0 L366.7 393.2 L352.7 424.4 L345.8 434.6 L330.1 449.6 L319.6 453.8 L353.8 458.6 L351.7 474.2 L339.5 487.4 L314.1 498.2 L300.8 492.8 L278.2 498.8 L256.9 491.0 L240.2 499.4 L220.3 510.8 L187.2 506.0 L178.9 528.8 L161.5 520.4 L124.5 544.4 L106.8 537.8 L114.8 529.4 L128.7 516.8 L147.9 480.8 L162.2 469.4 L184.8 469.4 L201.9 461.0 L215.1 446.0 L195.3 455.0 L168.1 446.0 L155.2 448.4 L141.9 441.8 L120.7 429.2 L132.2 421.4 L163.5 397.4 L164.2 378.8 L152.1 369.2 L141.3 374.0 L148.2 365.0 L156.9 353.6 L144.4 343.4 L154.1 336.8 L163.2 345.8 L172.3 342.2 L184.1 342.8 L197.7 347.0 L199.4 336.2 L201.2 323.0 L199.4 312.8 L204.7 297.8 L193.2 296.0 L178.9 272.6 L181.3 263.0 L187.2 249.8 L201.2 245.0 L192.5 243.2 L164.6 254.0 L136.4 263.6 L127.3 251.6 L131.5 236.0 L144.4 214.4 L136.0 194.6 L139.9 185.0 L124.5 185.0 L115.8 206.0 L103.6 224.0 L107.1 197.0 L110.6 182.0 L114.8 157.4 L89.0 138.2 L102.6 122.0 L106.8 105.2 L101.9 96.2 L105.4 78.2 L125.6 68.0 L122.8 53.0 L131.5 24.8 L140.2 27.8 L183.1 26.0 Z"/>
+          <path class="land" d="M99.1 266.0 L103.6 251.0 L91.4 228.8 L74.0 230.0 L51.4 239.0 L44.4 248.0 L27.0 272.0 L40.9 290.0 L75.7 299.0 L86.2 296.0 L93.2 302.0 L110.6 287.0 L115.8 272.0 Z"/>
+          <g id="routes"></g>
+          <g id="stops"></g>
+        </svg>
+        <div class="legend">
+          <span><i class="dot train"></i>Train</span>
+          <span><i class="dot bus"></i>Bus</span>
+          <span><i class="dot taxi"></i>Taxi</span>
+          <span class="muted">*Synthetic data for prototype use</span>
+        </div>
+      </div>
+      <div id="panel" class="panel"></div>
+    </main>
+
+    <main id="tickets-view" class="view">
+      <h1>My tickets</h1>
+      <div id="ticket-list" class="ticket-list"></div>
+    </main>
+  </section>
+
+  <div id="modal" class="modal">
+    <div id="modal-content" class="modal-card"></div>
+  </div>
+
+  <script>
+const stations = {
+  inverness: { name: "Inverness", x: 158.7, y: 93.2, label: "left" },
+  aberdeen: { name: "Aberdeen", x: 232.5, y: 113.0, label: "right" },
+  edinburgh: { name: "Edinburgh", x: 194.6, y: 185.0, label: "right" },
+  glasgow: { name: "Glasgow", x: 157.6, y: 190.4, label: "left" },
+  newcastle: { name: "Newcastle", x: 249.6, y: 243.8, label: "right" },
+  manchester: { name: "Manchester", x: 227.7, y: 333.2, label: "left" },
+  birmingham: { name: "Birmingham", x: 239.9, y: 393.2, label: "right" },
+  cardiff: { name: "Cardiff", x: 194.9, y: 453.2, label: "left" },
+  london: { name: "London", x: 301.2, y: 451.4, label: "right" }
+};
+
+const routes = [
+  { a: "inverness", b: "aberdeen", train: { minutes: 135, price: 32 }, bus: { minutes: 195, price: 18 } },
+  { a: "inverness", b: "edinburgh", train: { minutes: 210, price: 45 }, bus: { minutes: 240, price: 22 } },
+  { a: "inverness", b: "glasgow", bus: { minutes: 225, price: 21 } },
+  { a: "aberdeen", b: "edinburgh", train: { minutes: 150, price: 38 }, bus: { minutes: 180, price: 20 } },
+  { a: "edinburgh", b: "glasgow", train: { minutes: 50, price: 15 }, bus: { minutes: 75, price: 8 } },
+  { a: "edinburgh", b: "newcastle", train: { minutes: 90, price: 35 }, bus: { minutes: 165, price: 16 } },
+  { a: "glasgow", b: "manchester", train: { minutes: 210, price: 55 }, bus: { minutes: 300, price: 25 } },
+  { a: "newcastle", b: "manchester", train: { minutes: 150, price: 30 }, bus: { minutes: 240, price: 17 } },
+  { a: "newcastle", b: "london", train: { minutes: 170, price: 70 } },
+  { a: "manchester", b: "birmingham", train: { minutes: 90, price: 28 }, bus: { minutes: 150, price: 12 } },
+  { a: "manchester", b: "london", train: { minutes: 130, price: 75 }, bus: { minutes: 270, price: 22 } },
+  { a: "birmingham", b: "london", train: { minutes: 85, price: 45 }, bus: { minutes: 165, price: 14 } },
+  { a: "birmingham", b: "cardiff", train: { minutes: 120, price: 30 }, bus: { minutes: 165, price: 15 } },
+  { a: "cardiff", b: "london", train: { minutes: 120, price: 55 }, bus: { minutes: 210, price: 18 } }
+];
+
+const changeMinutes = 10;
+
+const modeNames = { train: "Train", bus: "Bus", taxi: "Taxi" };
+
+const schedules = {
+  train: { first: 6 * 60, gap: 60 },
+  bus: { first: 7 * 60, gap: 120 },
+  taxi: { first: 6 * 60, gap: 30 }
+};
+
+const state = {
+  mode: "train",
+  from: null,
+  to: null,
+  day: 0,
+  booking: null,
+  tickets: []
+};
+
+const map = document.getElementById("map");
+const panel = document.getElementById("panel");
+const modal = document.getElementById("modal");
+const modalContent = document.getElementById("modal-content");
+
+function findRoute(first, second) {
+  return routes.find(route =>
+    (route.a === first && route.b === second) || (route.a === second && route.b === first)
+  );
+}
+
+function connectionsFrom(id) {
+  return routes
+    .filter(route => route[state.mode] && (route.a === id || route.b === id))
+    .map(route => (route.a === id ? route.b : route.a));
+}
+
+function taxiTrip(from, to) {
+  const distance = Math.hypot(stations[from].x - stations[to].x, stations[from].y - stations[to].y);
+  return {
+    minutes: Math.round(distance * 1.6 / 5) * 5,
+    price: Math.round(10 + distance * 3)
+  };
+}
+
+function trip(from, to) {
+  if (state.mode === "taxi") return taxiTrip(from, to);
+  return findRoute(from, to)[state.mode];
+}
+
+function shortestPath(start, end) {
+  if (state.mode === "taxi") return [start, end];
+
+  const minutes = {};
+  const previous = {};
+  const unvisited = Object.keys(stations);
+  for (const id of unvisited) {
+    minutes[id] = Infinity;
+  }
+  minutes[start] = 0;
+
+  while (unvisited.length > 0) {
+    unvisited.sort((first, second) => minutes[first] - minutes[second]);
+    const current = unvisited.shift();
+    if (current === end || minutes[current] === Infinity) break;
+
+    for (const next of connectionsFrom(current)) {
+      const total = minutes[current] + findRoute(current, next)[state.mode].minutes;
+      if (total < minutes[next]) {
+        minutes[next] = total;
+        previous[next] = current;
+      }
+    }
+  }
+
+  if (minutes[end] === Infinity) return null;
+
+  const path = [end];
+  while (path[0] !== start) {
+    path.unshift(previous[path[0]]);
+  }
+  return path;
+}
+
+function pathTotals(path) {
+  let minutes = 0;
+  let price = 0;
+  for (let i = 0; i < path.length - 1; i++) {
+    const leg = trip(path[i], path[i + 1]);
+    minutes += leg.minutes;
+    price += leg.price;
+  }
+  return { minutes, price };
+}
+
+function changesText(path) {
+  const stops = path.slice(1, -1).map(id => stations[id].name);
+  if (state.mode === "taxi") return "Door to door";
+  if (stops.length === 0) return "Direct";
+  const label = stops.length === 1 ? "1 change" : stops.length + " changes";
+  return label + " at " + stops.join(", ");
+}
+
+function departures(from, to) {
+  const schedule = schedules[state.mode];
+  const offset = state.mode === "taxi" ? 0 : (routes.indexOf(findRoute(from, to)) * 7) % 30;
+  const times = [];
+  for (let time = schedule.first + offset; time <= 23 * 60; time += schedule.gap) {
+    times.push(time);
+  }
+  return times;
+}
+
+function journeyOptions(path) {
+  const legCount = path.length - 1;
+  const options = [];
+
+  for (const firstDeparture of departures(path[0], path[1])) {
+    const legs = [];
+    let readyAt = firstDeparture;
+
+    for (let i = 0; i < legCount; i++) {
+      const depart = departures(path[i], path[i + 1]).find(time => time >= readyAt);
+      if (depart === undefined) break;
+
+      const leg = trip(path[i], path[i + 1]);
+      legs.push({ from: path[i], to: path[i + 1], depart: depart, arrive: depart + leg.minutes, price: leg.price });
+      readyAt = depart + leg.minutes + changeMinutes;
+    }
+
+    if (legs.length === legCount) {
+      options.push({
+        legs: legs,
+        depart: legs[0].depart,
+        arrive: legs[legs.length - 1].arrive,
+        price: legs.reduce((sum, leg) => sum + leg.price, 0),
+        changes: changesText(path)
+      });
+    }
+  }
+
+  return options.filter((option, index) =>
+    index === options.length - 1 || option.arrive !== options[index + 1].arrive
+  );
+}
+
+function formatTime(minutes) {
+  const hours = Math.floor(minutes / 60) % 24;
+  const mins = minutes % 60;
+  const nextDay = minutes >= 24 * 60 ? " (next day)" : "";
+  return String(hours).padStart(2, "0") + ":" + String(mins).padStart(2, "0") + nextDay;
+}
+
+function formatDuration(minutes) {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours === 0) return mins + " min";
+  if (mins === 0) return hours + "h";
+  return hours + "h " + mins + "m";
+}
+
+function formatPrice(price) {
+  return "£" + price.toFixed(2);
+}
+
+function travelDate(offset) {
+  const date = new Date();
+  date.setDate(date.getDate() + offset);
+  return date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+}
+
+function modeName(mode) {
+  return modeNames[mode];
+}
+
+function onPath(path, a, b) {
+  for (let i = 0; i < path.length - 1; i++) {
+    if ((path[i] === a && path[i + 1] === b) || (path[i] === b && path[i + 1] === a)) return true;
+  }
+  return false;
+}
+
+function line(a, b, classes) {
+  const start = stations[a];
+  const end = stations[b];
+  return `<line class="${classes}" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}"/>`;
+}
+
+function drawMap() {
+  const chosenPath = state.to ? shortestPath(state.from, state.to) : [];
+  map.setAttribute("class", state.mode);
+
+  const lines = routes
+    .filter(route => route[state.mode])
+    .map(route => {
+      let classes = "route";
+      if (onPath(chosenPath, route.a, route.b)) classes += " active chosen " + state.mode;
+      else if (!state.to && (state.from === route.a || state.from === route.b)) classes += " active " + state.mode;
+      return line(route.a, route.b, classes);
+    });
+
+  if (state.mode === "taxi" && state.to) {
+    lines.push(line(state.from, state.to, "route active chosen taxi"));
+  }
+
+  document.getElementById("routes").innerHTML = lines.join("");
+
+  document.getElementById("stops").innerHTML = Object.entries(stations)
+    .map(([id, station]) => {
+      let classes = "stop";
+      if (id === state.from) classes += " origin";
+      else if (id === state.to) classes += " destination";
+      else if (chosenPath.includes(id)) classes += " reachable";
+      else if (state.from && !state.to) classes += " reachable";
+      const left = station.label === "left";
+      const textX = left ? station.x - 12 : station.x + 12;
+      const anchor = left ? "end" : "start";
+      return `
+        <g class="${classes}" data-id="${id}">
+          <circle cx="${station.x}" cy="${station.y}" r="8"/>
+          <text x="${textX}" y="${station.y + 4}" text-anchor="${anchor}">${station.name}</text>
+        </g>`;
+    })
+    .join("");
+}
+
+function modeToggle() {
+  const buttons = Object.keys(modeNames)
+    .map(mode => `<button data-action="mode" data-value="${mode}" class="${state.mode === mode ? "selected" : ""}">${modeNames[mode]}</button>`)
+    .join("");
+  return `<div class="segmented">${buttons}</div>`;
+}
+
+function originStep() {
+  const rows = Object.entries(stations)
+    .map(([id, station]) => `
+      <button class="row" data-action="stop" data-value="${id}">
+        <strong>${station.name}</strong>
+        <span class="muted">${state.mode === "taxi" ? "Door to door" : connectionsFrom(id).length + " direct routes"}</span>
+      </button>`)
+    .join("");
+
+  return `
+    <p class="step">Step 1 of 3</p>
+    <h2>Where are you starting from?</h2>
+    <p class="muted">Tap a stop on the map, or pick one below.</p>
+    <div class="list">${rows}</div>`;
+}
+
+function destinationStep() {
+  const rows = Object.keys(stations)
+    .filter(id => id !== state.from)
+    .map(id => ({ id: id, path: shortestPath(state.from, id) }))
+    .filter(item => item.path)
+    .map(item => ({ ...item, totals: pathTotals(item.path) }))
+    .sort((first, second) => first.totals.minutes - second.totals.minutes)
+    .map(item => `
+      <button class="row" data-action="stop" data-value="${item.id}">
+        <span>
+          <strong>${stations[item.id].name}</strong>
+          <small>${changesText(item.path)}, about ${formatDuration(item.totals.minutes)}</small>
+        </span>
+        <span class="price">from ${formatPrice(item.totals.price)}</span>
+      </button>`)
+    .join("");
+
+  const hint = state.mode === "taxi"
+    ? "Pick any stop. Taxis take you straight there with no changes."
+    : "Pick any stop. If there is no direct " + state.mode + ", the quickest route with changes is planned for you.";
+
+  return `
+    <p class="step">Step 2 of 3</p>
+    <h2>From ${stations[state.from].name}, where to?</h2>
+    <p class="muted">${hint}</p>
+    <div class="list">${rows}</div>
+    <button class="link" data-action="reset">Change starting point</button>`;
+}
+
+function timesStep() {
+  const path = shortestPath(state.from, state.to);
+
+  const days = [0, 1, 2]
+    .map(day => {
+      const label = day === 0 ? "Today" : day === 1 ? "Tomorrow" : travelDate(day);
+      return `<button class="chip ${state.day === day ? "selected" : ""}" data-action="day" data-value="${day}">${label}</button>`;
+    })
+    .join("");
+
+  const options = journeyOptions(path);
+  const rows = options
+    .map((journey, index) => `
+      <button class="row" data-action="depart" data-value="${index}">
+        <span>
+          <span class="time">${formatTime(journey.depart)}</span>
+          <small>Arrives ${formatTime(journey.arrive)}, ${formatDuration(journey.arrive - journey.depart)}</small>
+          <small>${journey.changes}</small>
+        </span>
+        <span class="price">${formatPrice(journey.price)}</span>
+      </button>`)
+    .join("");
+
+  return `
+    <p class="step">Step 3 of 3</p>
+    <h2>${stations[state.from].name} to ${stations[state.to].name}</h2>
+    <p class="muted"><span class="badge ${state.mode}">${modeName(state.mode)}</span> ${changesText(path)}. Choose a ${state.mode === "taxi" ? "pick-up" : "departure"} time.</p>
+    <div class="chips">${days}</div>
+    <div class="list">${rows || `<p class="muted">No journeys can be completed in one day on this route.</p>`}</div>
+    <button class="link" data-action="back">Change destination</button>`;
+}
+
+function renderPanel() {
+  let content = modeToggle();
+  if (!state.from) content += originStep();
+  else if (!state.to) content += destinationStep();
+  else content += timesStep();
+  panel.innerHTML = content;
+}
+
+function update() {
+  drawMap();
+  renderPanel();
+}
+
+function selectStop(id) {
+  if (id === state.from) {
+    state.from = null;
+    state.to = null;
+  } else if (state.from && shortestPath(state.from, id)) {
+    state.to = id;
+  } else {
+    state.from = id;
+    state.to = null;
+  }
+  update();
+}
+
+function setMode(mode) {
+  state.mode = mode;
+  if (state.to && !shortestPath(state.from, state.to)) state.to = null;
+  update();
+}
+
+function makeRandom(seed) {
+  let value = 1;
+  for (const char of seed) {
+    value = (value * 31 + char.charCodeAt(0)) % 2147483647;
+  }
+  return function () {
+    value = (value * 16807) % 2147483647;
+    return value / 2147483647;
+  };
+}
+
+function finderPattern(x, y) {
+  return `
+    <rect x="${x}" y="${y}" width="7" height="7"/>
+    <rect x="${x + 1}" y="${y + 1}" width="5" height="5" fill="#fff"/>
+    <rect x="${x + 2}" y="${y + 2}" width="3" height="3"/>`;
+}
+
+function fakeQrCode(text) {
+  const size = 25;
+  const random = makeRandom(text);
+  let cells = "";
+
+  for (let row = 0; row < size; row++) {
+    for (let col = 0; col < size; col++) {
+      const top = row < 8;
+      const left = col < 8;
+      const right = col >= size - 8;
+      const bottom = row >= size - 8;
+      const inCorner = (top && left) || (top && right) || (bottom && left);
+      if (!inCorner && random() > 0.5) {
+        cells += `<rect x="${col}" y="${row}" width="1" height="1"/>`;
+      }
+    }
+  }
+
+  return `
+    <svg class="qr" viewBox="-2 -2 ${size + 4} ${size + 4}">
+      <rect x="-2" y="-2" width="${size + 4}" height="${size + 4}" fill="#fff"/>
+      ${cells}
+      ${finderPattern(0, 0)}
+      ${finderPattern(size - 7, 0)}
+      ${finderPattern(0, size - 7)}
+    </svg>`;
+}
+
+function legsList(journey) {
+  const items = journey.legs
+    .map(leg => `
+      <li>
+        <strong>${formatTime(leg.depart)}</strong> ${stations[leg.from].name}
+        to <strong>${formatTime(leg.arrive)}</strong> ${stations[leg.to].name}
+      </li>`)
+    .join("");
+  return `<ol class="legs">${items}</ol>`;
+}
+
+function ticketCard(ticket, showQr) {
+  return `
+    <div class="ticket">
+      <div class="ticket-head ${ticket.mode}">
+        <small>${modeName(ticket.mode)} ticket, ${ticket.fare}</small>
+        <h3>${stations[ticket.from].name} to ${stations[ticket.to].name}</h3>
+      </div>
+      <div class="ticket-body">
+        <div class="details">
+          <span><small>Date</small>${ticket.date}</span>
+          <span><small>Paid</small>${formatPrice(ticket.price)}</span>
+          <span><small>Departs</small>${formatTime(ticket.journey.depart)}</span>
+          <span><small>Arrives</small>${formatTime(ticket.journey.arrive)}</span>
+        </div>
+        ${legsList(ticket.journey)}
+        ${showQr
+          ? fakeQrCode(ticket.reference) + `<p class="ticket-ref">Ref ${ticket.reference}. Valid for every leg of this journey.</p>`
+          : `<button class="button secondary full" data-action="show-ticket" data-value="${ticket.reference}">Show QR code</button>`}
+      </div>
+    </div>`;
+}
+
+function renderTickets() {
+  const list = document.getElementById("ticket-list");
+  if (state.tickets.length === 0) {
+    list.innerHTML = `<p class="muted">No tickets yet. Book a journey to see it here.</p>`;
+    return;
+  }
+  list.innerHTML = state.tickets.map(ticket => ticketCard(ticket, false)).join("");
+}
+
+function openModal(content) {
+  modalContent.innerHTML = content;
+  modal.classList.add("open");
+}
+
+function closeModal() {
+  modal.classList.remove("open");
+}
+
+function bookingPrice() {
+  const single = state.booking.journey.price;
+  return state.booking.fare === "return" ? single * 1.8 : single;
+}
+
+function showCheckout() {
+  const booking = state.booking;
+  const fareButton = (fare, label) =>
+    `<button data-action="fare" data-value="${fare}" class="${booking.fare === fare ? "selected" : ""}">${label}</button>`;
+
+  openModal(`
+    <h2>Checkout</h2>
+    <div class="summary">
+      <div><span class="muted">Journey</span><strong>${stations[booking.from].name} to ${stations[booking.to].name}</strong></div>
+      <div><span class="muted">Date</span><strong>${booking.date}</strong></div>
+      <div><span class="muted">Travel by</span><strong>${modeName(booking.mode)}</strong></div>
+      <div><span class="muted">Changes</span><strong>${booking.journey.changes}</strong></div>
+    </div>
+    ${legsList(booking.journey)}
+    <h3>Ticket type</h3>
+    <div class="segmented">
+      ${fareButton("single", "Single")}
+      ${fareButton("return", "Return")}
+    </div>
+    <h3>Payment</h3>
+    <div class="fake-input">Visa ending 4242</div>
+    <button class="button primary full" data-action="pay">Pay ${formatPrice(bookingPrice())}</button>
+    <button class="button secondary full" data-action="close">Cancel</button>`);
+}
+
+function startBooking(index) {
+  const path = shortestPath(state.from, state.to);
+  state.booking = {
+    from: state.from,
+    to: state.to,
+    mode: state.mode,
+    date: travelDate(state.day),
+    fare: "single",
+    journey: journeyOptions(path)[index]
+  };
+  showCheckout();
+}
+
+function pay(button) {
+  button.disabled = true;
+  button.textContent = "Processing payment...";
+
+  setTimeout(() => {
+    const ticket = {
+      ...state.booking,
+      price: bookingPrice(),
+      reference: "WP" + Math.floor(100000 + Math.random() * 900000)
+    };
+    state.tickets.unshift(ticket);
+    renderTickets();
+
+    openModal(`
+      <h2 class="success">Payment successful</h2>
+      <p class="muted">Your ticket has been added to My tickets.</p>
+      ${ticketCard(ticket, true)}
+      <button class="button primary full" data-action="view-tickets">View my tickets</button>
+      <button class="button secondary full" data-action="close">Book another journey</button>`);
+  }, 1200);
+}
+
+function showView(name) {
+  document.querySelectorAll(".view").forEach(view => view.classList.remove("active"));
+  document.getElementById(name + "-view").classList.add("active");
+  document.querySelectorAll(".nav-link[data-view]").forEach(link => {
+    link.classList.toggle("active", link.dataset.view === name);
+  });
+}
+
+function showScreen(name) {
+  document.querySelectorAll(".screen").forEach(screen => screen.classList.remove("active"));
+  document.getElementById(name + "-screen").classList.add("active");
+}
+
+map.addEventListener("click", event => {
+  const stop = event.target.closest(".stop");
+  if (stop) selectStop(stop.dataset.id);
+});
+
+panel.addEventListener("click", event => {
+  const button = event.target.closest("[data-action]");
+  if (!button) return;
+  const value = button.dataset.value;
+
+  if (button.dataset.action === "mode") setMode(value);
+  if (button.dataset.action === "stop") selectStop(value);
+  if (button.dataset.action === "day") {
+    state.day = Number(value);
+    renderPanel();
+  }
+  if (button.dataset.action === "depart") startBooking(Number(value));
+  if (button.dataset.action === "back") {
+    state.to = null;
+    update();
+  }
+  if (button.dataset.action === "reset") {
+    state.from = null;
+    state.to = null;
+    update();
+  }
+});
+
+modal.addEventListener("click", event => {
+  if (event.target === modal) closeModal();
+  const button = event.target.closest("[data-action]");
+  if (!button) return;
+  const value = button.dataset.value;
+
+  if (button.dataset.action === "fare") {
+    state.booking.fare = value;
+    showCheckout();
+  }
+  if (button.dataset.action === "pay") pay(button);
+  if (button.dataset.action === "close") closeModal();
+  if (button.dataset.action === "view-tickets") {
+    closeModal();
+    showView("tickets");
+  }
+});
+
+document.getElementById("ticket-list").addEventListener("click", event => {
+  const button = event.target.closest("[data-action='show-ticket']");
+  if (!button) return;
+  const ticket = state.tickets.find(item => item.reference === button.dataset.value);
+  openModal(ticketCard(ticket, true) + `<button class="button secondary full" data-action="close">Close</button>`);
+});
+
+document.querySelectorAll(".nav-link[data-view]").forEach(link => {
+  link.addEventListener("click", () => showView(link.dataset.view));
+});
+
+document.getElementById("login-button").addEventListener("click", () => showScreen("app"));
+
+document.getElementById("logout-button").addEventListener("click", () => {
+  closeModal();
+  showView("plan");
+  showScreen("login");
+});
+
+update();
+renderTickets();
+</script>
+</body>
+</html>
