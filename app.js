@@ -29,6 +29,14 @@ const routes = [
 
 const changeMinutes = 10;
 
+const modeNames = { train: "Train", bus: "Bus", taxi: "Taxi" };
+
+const schedules = {
+  train: { first: 6 * 60, gap: 60 },
+  bus: { first: 7 * 60, gap: 120 },
+  taxi: { first: 6 * 60, gap: 30 }
+};
+
 const state = {
   mode: "train",
   from: null,
@@ -55,7 +63,22 @@ function connectionsFrom(id) {
     .map(route => (route.a === id ? route.b : route.a));
 }
 
+function taxiTrip(from, to) {
+  const distance = Math.hypot(stations[from].x - stations[to].x, stations[from].y - stations[to].y);
+  return {
+    minutes: Math.round(distance * 1.6 / 5) * 5,
+    price: Math.round(10 + distance * 3)
+  };
+}
+
+function trip(from, to) {
+  if (state.mode === "taxi") return taxiTrip(from, to);
+  return findRoute(from, to)[state.mode];
+}
+
 function shortestPath(start, end) {
+  if (state.mode === "taxi") return [start, end];
+
   const minutes = {};
   const previous = {};
   const unvisited = Object.keys(stations);
@@ -87,61 +110,53 @@ function shortestPath(start, end) {
   return path;
 }
 
-function pathRoutes(path) {
-  const result = [];
-  for (let i = 0; i < path.length - 1; i++) {
-    result.push(findRoute(path[i], path[i + 1]));
-  }
-  return result;
-}
-
 function pathTotals(path) {
   let minutes = 0;
   let price = 0;
-  for (const route of pathRoutes(path)) {
-    minutes += route[state.mode].minutes;
-    price += route[state.mode].price;
+  for (let i = 0; i < path.length - 1; i++) {
+    const leg = trip(path[i], path[i + 1]);
+    minutes += leg.minutes;
+    price += leg.price;
   }
   return { minutes, price };
 }
 
 function changesText(path) {
   const stops = path.slice(1, -1).map(id => stations[id].name);
+  if (state.mode === "taxi") return "Door to door";
   if (stops.length === 0) return "Direct";
   const label = stops.length === 1 ? "1 change" : stops.length + " changes";
   return label + " at " + stops.join(", ");
 }
 
-function departures(route) {
-  const offset = (routes.indexOf(route) * 7) % 30;
-  const first = state.mode === "train" ? 6 * 60 : 7 * 60;
-  const gap = state.mode === "train" ? 60 : 120;
+function departures(from, to) {
+  const schedule = schedules[state.mode];
+  const offset = state.mode === "taxi" ? 0 : (routes.indexOf(findRoute(from, to)) * 7) % 30;
   const times = [];
-  for (let time = first + offset; time <= 23 * 60; time += gap) {
+  for (let time = schedule.first + offset; time <= 23 * 60; time += schedule.gap) {
     times.push(time);
   }
   return times;
 }
 
 function journeyOptions(path) {
-  const routesOnPath = pathRoutes(path);
+  const legCount = path.length - 1;
   const options = [];
 
-  for (const firstDeparture of departures(routesOnPath[0])) {
+  for (const firstDeparture of departures(path[0], path[1])) {
     const legs = [];
     let readyAt = firstDeparture;
 
-    for (let i = 0; i < routesOnPath.length; i++) {
-      const route = routesOnPath[i];
-      const depart = departures(route).find(time => time >= readyAt);
+    for (let i = 0; i < legCount; i++) {
+      const depart = departures(path[i], path[i + 1]).find(time => time >= readyAt);
       if (depart === undefined) break;
 
-      const trip = route[state.mode];
-      legs.push({ from: path[i], to: path[i + 1], depart: depart, arrive: depart + trip.minutes, price: trip.price });
-      readyAt = depart + trip.minutes + changeMinutes;
+      const leg = trip(path[i], path[i + 1]);
+      legs.push({ from: path[i], to: path[i + 1], depart: depart, arrive: depart + leg.minutes, price: leg.price });
+      readyAt = depart + leg.minutes + changeMinutes;
     }
 
-    if (legs.length === routesOnPath.length) {
+    if (legs.length === legCount) {
       options.push({
         legs: legs,
         depart: legs[0].depart,
@@ -183,25 +198,40 @@ function travelDate(offset) {
 }
 
 function modeName(mode) {
-  return mode === "train" ? "Train" : "Bus";
+  return modeNames[mode];
+}
+
+function onPath(path, a, b) {
+  for (let i = 0; i < path.length - 1; i++) {
+    if ((path[i] === a && path[i + 1] === b) || (path[i] === b && path[i + 1] === a)) return true;
+  }
+  return false;
+}
+
+function line(a, b, classes) {
+  const start = stations[a];
+  const end = stations[b];
+  return `<line class="${classes}" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}"/>`;
 }
 
 function drawMap() {
   const chosenPath = state.to ? shortestPath(state.from, state.to) : [];
-  const chosenRoutes = state.to ? pathRoutes(chosenPath) : [];
   map.setAttribute("class", state.mode);
 
-  document.getElementById("routes").innerHTML = routes
+  const lines = routes
     .filter(route => route[state.mode])
     .map(route => {
-      const start = stations[route.a];
-      const end = stations[route.b];
       let classes = "route";
-      if (chosenRoutes.includes(route)) classes += " active chosen " + state.mode;
+      if (onPath(chosenPath, route.a, route.b)) classes += " active chosen " + state.mode;
       else if (!state.to && (state.from === route.a || state.from === route.b)) classes += " active " + state.mode;
-      return `<line class="${classes}" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}"/>`;
-    })
-    .join("");
+      return line(route.a, route.b, classes);
+    });
+
+  if (state.mode === "taxi" && state.to) {
+    lines.push(line(state.from, state.to, "route active chosen taxi"));
+  }
+
+  document.getElementById("routes").innerHTML = lines.join("");
 
   document.getElementById("stops").innerHTML = Object.entries(stations)
     .map(([id, station]) => {
@@ -223,11 +253,10 @@ function drawMap() {
 }
 
 function modeToggle() {
-  return `
-    <div class="segmented">
-      <button data-action="mode" data-value="train" class="${state.mode === "train" ? "selected" : ""}">Train</button>
-      <button data-action="mode" data-value="bus" class="${state.mode === "bus" ? "selected" : ""}">Bus</button>
-    </div>`;
+  const buttons = Object.keys(modeNames)
+    .map(mode => `<button data-action="mode" data-value="${mode}" class="${state.mode === mode ? "selected" : ""}">${modeNames[mode]}</button>`)
+    .join("");
+  return `<div class="segmented">${buttons}</div>`;
 }
 
 function originStep() {
@@ -235,7 +264,7 @@ function originStep() {
     .map(([id, station]) => `
       <button class="row" data-action="stop" data-value="${id}">
         <strong>${station.name}</strong>
-        <span class="muted">${connectionsFrom(id).length} direct routes</span>
+        <span class="muted">${state.mode === "taxi" ? "Door to door" : connectionsFrom(id).length + " direct routes"}</span>
       </button>`)
     .join("");
 
@@ -263,10 +292,14 @@ function destinationStep() {
       </button>`)
     .join("");
 
+  const hint = state.mode === "taxi"
+    ? "Pick any stop. Taxis take you straight there with no changes."
+    : "Pick any stop. If there is no direct " + state.mode + ", the quickest route with changes is planned for you.";
+
   return `
     <p class="step">Step 2 of 3</p>
     <h2>From ${stations[state.from].name}, where to?</h2>
-    <p class="muted">Pick any stop. If there is no direct ${state.mode}, the quickest route with changes is planned for you.</p>
+    <p class="muted">${hint}</p>
     <div class="list">${rows}</div>
     <button class="link" data-action="reset">Change starting point</button>`;
 }
@@ -297,7 +330,7 @@ function timesStep() {
   return `
     <p class="step">Step 3 of 3</p>
     <h2>${stations[state.from].name} to ${stations[state.to].name}</h2>
-    <p class="muted"><span class="badge ${state.mode}">${modeName(state.mode)}</span> ${changesText(path)}. Choose a departure time.</p>
+    <p class="muted"><span class="badge ${state.mode}">${modeName(state.mode)}</span> ${changesText(path)}. Choose a ${state.mode === "taxi" ? "pick-up" : "departure"} time.</p>
     <div class="chips">${days}</div>
     <div class="list">${rows || `<p class="muted">No journeys can be completed in one day on this route.</p>`}</div>
     <button class="link" data-action="back">Change destination</button>`;

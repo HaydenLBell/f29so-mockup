@@ -7,6 +7,7 @@
   --brand: #1d2a6b;
   --train: #2b50d6;
   --bus: #e0601a;
+  --taxi: #a86b00;
   --sea: #dce8f4;
   --land: #fbfaf6;
 }
@@ -197,6 +198,10 @@ nav {
   --mode-colour: var(--bus);
 }
 
+#map.taxi {
+  --mode-colour: var(--taxi);
+}
+
 .modal-card h3 {
   margin-top: 16px;
 }
@@ -225,6 +230,10 @@ nav {
 
 .route.active.bus {
   stroke: var(--bus);
+}
+
+.route.active.taxi {
+  stroke: var(--taxi);
 }
 
 .route.chosen {
@@ -287,6 +296,10 @@ nav {
 
 .dot.bus {
   background: var(--bus);
+}
+
+.dot.taxi {
+  background: var(--taxi);
 }
 
 .step {
@@ -399,6 +412,10 @@ nav {
   background: var(--bus);
 }
 
+.badge.taxi {
+  background: var(--taxi);
+}
+
 #tickets-view.active {
   max-width: 900px;
   margin: 0 auto;
@@ -430,6 +447,10 @@ nav {
 
 .ticket-head.bus {
   background: var(--bus);
+}
+
+.ticket-head.taxi {
+  background: var(--taxi);
 }
 
 .ticket-head h3 {
