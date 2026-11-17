@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Public Transport Prototype - Group 2</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section id="login-screen" class="screen active">
+    <div class="login-card">
+      <div class="brand large">F29SO - Group 2</div>
+      <p class="muted">Trains and buses across the UK in one place.</p>
+      <label>Email</label>
+      <div class="fake-input">bell.hayden@example.com</div>
+      <label>Password</label>
+      <div class="fake-input">••••••••••</div>
+      <button id="login-button" class="button primary full">Sign in</button>
+      <p class="note">*Prototype: no details needed, just press sign in.</p>
+    </div>
+  </section>
+
+  <section id="app-screen" class="screen">
+    <header class="top-bar">
+      <div class="brand">F29SO - Group 2</div>
+      <nav>
+        <button class="nav-link active" data-view="plan">Plan a journey</button>
+        <button class="nav-link" data-view="tickets">My tickets</button>
+        <button id="logout-button" class="nav-link">Sign out</button>
+      </nav>
+    </header>
+
+    <main id="plan-view" class="view active">
+      <div class="map-card">
+        <svg id="map" viewBox="0 0 400 560">
+          <path class="land" d="M188.3 21.8 L198.7 23.6 L198.0 35.6 L178.5 54.8 L174.4 70.4 L159.4 90.8 L191.4 78.8 L236.0 80.6 L243.7 92.0 L233.2 113.0 L219.6 139.4 L209.9 155.0 L215.8 165.2 L196.0 175.4 L180.3 180.2 L194.2 183.2 L217.9 182.0 L231.5 188.0 L236.0 195.8 L256.2 240.8 L263.9 260.6 L284.5 272.6 L302.9 294.8 L301.9 327.2 L317.6 353.6 L312.7 371.0 L323.1 365.0 L351.0 366.2 L366.0 386.0 L366.7 393.2 L352.7 424.4 L345.8 434.6 L330.1 449.6 L319.6 453.8 L353.8 458.6 L351.7 474.2 L339.5 487.4 L314.1 498.2 L300.8 492.8 L278.2 498.8 L256.9 491.0 L240.2 499.4 L220.3 510.8 L187.2 506.0 L178.9 528.8 L161.5 520.4 L124.5 544.4 L106.8 537.8 L114.8 529.4 L128.7 516.8 L147.9 480.8 L162.2 469.4 L184.8 469.4 L201.9 461.0 L215.1 446.0 L195.3 455.0 L168.1 446.0 L155.2 448.4 L141.9 441.8 L120.7 429.2 L132.2 421.4 L163.5 397.4 L164.2 378.8 L152.1 369.2 L141.3 374.0 L148.2 365.0 L156.9 353.6 L144.4 343.4 L154.1 336.8 L163.2 345.8 L172.3 342.2 L184.1 342.8 L197.7 347.0 L199.4 336.2 L201.2 323.0 L199.4 312.8 L204.7 297.8 L193.2 296.0 L178.9 272.6 L181.3 263.0 L187.2 249.8 L201.2 245.0 L192.5 243.2 L164.6 254.0 L136.4 263.6 L127.3 251.6 L131.5 236.0 L144.4 214.4 L136.0 194.6 L139.9 185.0 L124.5 185.0 L115.8 206.0 L103.6 224.0 L107.1 197.0 L110.6 182.0 L114.8 157.4 L89.0 138.2 L102.6 122.0 L106.8 105.2 L101.9 96.2 L105.4 78.2 L125.6 68.0 L122.8 53.0 L131.5 24.8 L140.2 27.8 L183.1 26.0 Z"/>
+          <path class="land" d="M99.1 266.0 L103.6 251.0 L91.4 228.8 L74.0 230.0 L51.4 239.0 L44.4 248.0 L27.0 272.0 L40.9 290.0 L75.7 299.0 L86.2 296.0 L93.2 302.0 L110.6 287.0 L115.8 272.0 Z"/>
+          <g id="routes"></g>
+          <g id="stops"></g>
+        </svg>
+        <div class="legend">
+          <span><i class="dot train"></i>Train</span>
+          <span><i class="dot bus"></i>Bus</span>
+          <span class="muted">*Synthetic data for prototype use</span>
+        </div>
+      </div>
+      <div id="panel" class="panel"></div>
+    </main>
+
+    <main id="tickets-view" class="view">
+      <h1>My tickets</h1>
+      <div id="ticket-list" class="ticket-list"></div>
+    </main>
+  </section>
+
+  <div id="modal" class="modal">
+    <div id="modal-content" class="modal-card"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
